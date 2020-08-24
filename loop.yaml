@@ -1,0 +1,90 @@
+---
+- name: wellcome to ansible
+  hosts: host
+  vars:
+    user: ec2-user
+  vars_prompt:
+    - name: "prompt"
+      prompt: what's about to do with sonar nexus tomcat
+  tasks:
+    - name: install git
+      yum:
+         name: nfs-utils
+         state: installed
+      when: ansible_os_family == "RedHat" and ansible_distribution_version == "2"
+    - name:
+      apt:
+         name: apache2
+         state: installed
+      when: ansible_os_family == "Debain"
+    - name: downloads using loop
+      get_url: 
+        url: "{{ item }}"
+        dest: /opt/
+        remote_src: yes
+      with_items: 
+        - https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-7.4.zip
+        - https://mirrors.estointernet.in/apache/tomcat/tomcat-9/v9.0.36/bin/apache-tomcat-9.0.36.tar.gz
+        - https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    - name: unziping the links
+      unarchive:
+        src: "{{ item }}"
+        dest: /opt 
+        remote_src: yes
+      with_items:
+        - /opt/sonarqube-7.4.zip
+        - /opt/apache-tomcat-9.0.36.tar.gz
+        - /opt/nexus-3.24.0-02-unix.tar.gz
+    - name: change ownership
+      file: 
+        path: "{{ item }}"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        remote_src: yes
+        recurse: yes
+      with_items:
+        - /opt/sonarqube-7.4
+        - /opt/nexus-3.24.0-02
+        - /opt/sonatype-work
+    - name: to copy the files
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest}}"
+      with_items:
+        - { src: '/opt/sonarqube-7.4/bin/linux-x86-64/sonar.sh', dest: '/opt/sonarqube-7.4/bin/linux-x86-64/' }
+        - { src: '/opt/maven', dest: '/opt/' }
+        - { src: '/etc/profile.d/maven.sh', dest: '/etc/profile.d/' }
+        - { src: '/opt/nexus/nexus.rc', dest: '/opt/nexus-3.24.0-02/bin/' }
+        - { src: '/opt/tomcat/tomcat-users.xml', dest: '/opt/apache-tomcat-9.0.36/conf/' }
+        - { src: '/opt/tomcat/manager.xml', dest: '/opt/apache-tomcat-9.0.36/conf/Catalina/localhost/' }
+    - name: starting the files
+      shell: "{{ item }}"
+      tags:
+        - excute
+      with_items: 
+        - /opt/sonarqube-7.4/bin/linux-x86-64/sonar.sh {{ prompt }}
+        - /opt/nexus-3.24.0-02/bin/nexus {{ prompt }}
+    - name: tomcat
+      service:
+        name: tomcat
+        state: started
+      tags:
+        - tomcat
+    - name: copying to web apps
+      copy:
+        src: /opt/suresh.war
+        dest: /opt/apache-tomcat-9.0.36/webapps/
+      notify:
+       - restart
+    - name: copy to only perticular node
+      copy:
+        src: /opt/index.html
+        dest: /opt
+      tags:
+        - delegate
+      delegate_to: 3.80.18.169
+  handlers:
+    - name: restart
+      service:
+        name: tomcat
+        state: restarted

@@ -1,0 +1,84 @@
+---
+-  name: welcome to ansible playbook
+   hosts: host
+   gather_facts: false
+   tasks:
+     - name: download sonarqube
+       get_url:
+         url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-7.4.zip
+         dest: /opt
+         remote_src: yes
+     - name: unzip sonarqude
+       unarchive:
+         src: /opt/sonarqube-7.4.zip
+         dest: /opt/
+         remote_src: yes
+     - name: change ownership
+       file:
+         path: /opt/sonarqube-7.4
+         owner: ec2-user
+         group: ec2-user
+         recurse: yes
+     - name: copy sonarqube
+       copy:
+         src: /opt/sonarqube-7.4/bin/linux-x86-64/sonar.sh
+         dest: /opt/sonarqube-7.4/bin/linux-x86-64/
+     - name: startsonar
+       shell : nohup /opt/sonarqube-7.4/bin/linux-x86-64/sonar.sh status
+     - name: maven
+       copy:
+         src: /opt/maven
+         dest: /opt
+     - name: path for maven
+       copy: 
+         src: /etc/profile.d/maven.sh
+         dest: /etc/profile.d/
+     - name: update maven
+       shell: source /etc/profile.d/maven.sh
+     - name: downolad nexus
+       get_url: 
+         url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+         dest: /opt
+     - name: un tar nexus
+       unarchive:
+         src: /opt/nexus-3.24.0-02-unix.tar.gz
+         dest: /opt
+         remote_src: yes
+     - name: copy nexus.rc
+       copy: 
+         src: /opt/nexus/nexus.rc
+         dest: /opt/nexus-3.24.0-02/bin/
+     - name: change owner ship to nexus
+       file:
+         path: /opt/nexus-3.24.0-02
+         owner: ec2-user
+         group: ec2-user
+         recurse: yes
+     - name: change owner ship to nexus
+       file:
+         path: /opt/sonatype-work
+         owner: ec2-user
+         group: ec2-user
+         recurse: yes
+     - name: start nexus
+       shell: nohup /opt/nexus-3.24.0-02/bin/nexus start
+     - name: to downolad tomcat
+       get_url:
+         url: https://mirrors.estointernet.in/apache/tomcat/tomcat-9/v9.0.36/bin/apache-tomcat-9.0.36.tar.gz
+         dest: /opt
+         remote_src: yes
+     - name: untar the tomcat
+       unarchive:
+         src: /opt/apache-tomcat-9.0.36.tar.gz
+         dest: /opt
+         remote_src: yes
+     - name: adding users to xml
+       copy:
+         src: /opt/tomcat/tomcat-users.xml
+         dest: /opt/apache-tomcat-9.0.36/conf/
+     - name: manager.xml
+       copy:
+         src: /opt/tomcat/manager.xml
+         dest: /opt/apache-tomcat-9.0.36/conf/Catalina/localhost/
+     - name: start tomcat
+       shell: /opt/apache-tomcat-9.0.36/bin/startup.sh status

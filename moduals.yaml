@@ -1,0 +1,187 @@
+starting with 
+---
+-  name: welcome to ansible playbook
+   hosts: host
+   gather_facts: false
+   tasks:
+     - name:
+	   module:
+	     Arguments:
+		 src:
+		 dest:
+owner ship
+    - name: change ownership
+      file:
+        path: /opt/sonarqube-7.4
+        owner: ec2-user
+        group: ec2-user
+        recurse: yes	
+untar    
+    - name: unzip sonarqude
+      unarchive:
+        src: /opt/sonarqube-7.4.zip
+        dest: /opt/
+        remote_src: yes		
+wget     
+    - name: download sonarqube
+      get_url:
+        url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-7.4.zip
+        dest: /opt
+        remote_src: yes
+		
+excutubal command
+    - name: startsonar
+      shell : nohup /opt/sonarqube-7.4/bin/linux-x86-64/sonar.sh start
+	  
+copy 
+    - name: copy sonarqube
+       copy:
+         src: /opt/sonarqube-7.4/bin/linux-x86-64/sonar.sh
+         dest: /opt/sonarqube-7.4/bin/linux-x86-64/
+	
+
+
+when conditions    
+---
+-  name: welcome to ansible play book
+   hosts: host
+   gather_facts: false
+   tasks:
+     - name: install git     
+       yum:
+         name: nfs-utils 
+         state: installed
+       when: ansible_os_family == "RedHat" and ansible_os_family == "2"
+     - name:
+       apt:
+         name: apache2
+         state: installed
+       when: ansible_os_family == "Debain"
+       
+       
+ loop 
+ 
+ 
+ ---
+-  name: welcome to ansible play book
+   hosts: host
+   gather_facts: false
+   tasks:
+     - name: install git
+       yum:
+         name: "{{ item }}"
+         state: installed
+       with_items:
+         - git
+         - wget
+         - curl
+         - httpd
+         - nfs-utils
+         - samba
+         - tomcat
+         - maven
+     - name: copy using loop
+       copy:
+         src: "{{ item.src }}"
+         dest: "{{ item.dest }}"
+       with_items:
+         - {src: '/opt/1' , dest: '/opt/maven' }
+         - {src: '/opt/2' , dest: '/opt/nexus-3.24.0-02' }
+         - {src: '/opt/maven/3' , dest: '/opt/raj/' }
+         
+
+
+deligate
+
+- name: copy to only perticular node
+      copy:
+        src: /opt/index.html
+        dest: /opt
+      tags:
+        - delegate
+      delegate_to: 3.80.18.169         
+         
+ 
+         
+ vars
+ 
+ name: welcome to ansible playbook
+   hosts: host
+   vars: 
+     name: start
+     b: stop
+     c: status
+   gather_facts: false
+   tasks:
+     - name: startsonar
+       shell : nohup /opt/sonarqube-7.4/bin/linux-x86-64/sonar.sh {{ c }}
+       tags:
+         - sonar
+     - name: start tomcat
+       shell: /opt/apache-tomcat-9.0.36/bin/startup.sh {{ c }}
+       tags:
+         - tomcat
+     - name: to start nexus
+       shell: nohup /opt/nexus-3.24.0-02/bin/nexus {{ c }}
+       tags:
+         - nexus
+         
+         
+         
+handlers   which is used to run perticular task
+---
+-  name: welcome to ansible playbook
+   hosts: host
+   tasks:
+     - name: install apachy
+       yum:
+         name: httpd
+         state: installed
+     - name: copp
+       copy: 
+         src: /opt/index.html
+         dest: /var/www/html/
+       notify:
+        - restart
+   handlers:
+      - name: restart
+        service:
+          name: httpd
+          state: restarted
+          
+          
+          
+ using prompt : which is used to pre notify the task 
+      
+---
+-  name: welcome to ansible playbook
+   hosts: host
+   vars_prompt: 
+     - name: "prompt"
+       prompt: wthat's about your work
+     - name: "tumcat"
+       prompt: abot tomcat
+   gather_facts: false
+   tasks:
+     - name: startsonar
+       shell : nohup /opt/sonarqube-7.4/bin/linux-x86-64/sonar.sh {{ prompt }}
+       tags:
+         - sonar
+     - name: start tomcat
+       shell: /opt/apache-tomcat-9.0.36/bin/startup.sh {{ tumcat }}
+       tags:
+         - tomcat
+     - name: to start nexus
+       shell: nohup /opt/nexus-3.24.0-02/bin/nexus {{ prompt }}
+       tags:
+         - nexus
+         
+         
+  vars_files:
+    - "/etc/ansible/host_vars/ec2-35-153-255-65.compute-1.amazonaws.com"
+    - "/etc/ansible/host_vars/ec2-54-237-113-218.compute-1.amazonaws.com"
+    - "/etc/ansible/group_vars/host"
+ 
+          ansible-playbook ansible.yaml --ask-vault-pas
+          
+ 
