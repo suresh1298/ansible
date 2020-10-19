@@ -183,5 +183,8 @@ handlers   which is used to run perticular task
     - "/etc/ansible/group_vars/host"
  
           ansible-playbook ansible.yaml --ask-vault-pas
+
+ansible-vault encrypt_string "string" --name "key"
+
           
  
