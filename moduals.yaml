@@ -186,5 +186,15 @@ handlers   which is used to run perticular task
 
 ansible-vault encrypt_string "string" --name "key"
 
+--- 
+assible script for postgress login and do task
+    - name: Create extensions
+      become_user: 'postgres'
+      become: yes
+      shell: "PGPASSWORD=postgres psql -U postgres {{ db }} -c \"CREATE EXTENSION IF NOT EXISTS tablefunc;\""
+      #shell: "psql {{ db }} -c 'CREATE EXTENSION IF NOT EXISTS tablefunc;'"
+      with_items: postgresql_extensions
+
+
           
  
